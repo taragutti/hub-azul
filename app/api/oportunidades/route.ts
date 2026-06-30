@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
-import { recalcularMatchesDaOportunidade } from '@/lib/matching';
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 // GET /api/oportunidades?subsetor=AQUICULTURA_PESCA&ativa=true
 export async function GET(req: NextRequest) {
+  const { prisma } = await import('@/lib/prisma');
+
   const { searchParams } = new URL(req.url);
   const subsetor = searchParams.get('subsetor');
   const ativa = searchParams.get('ativa');
 
-  const where: Record<string, unknown> = {};
+  const where: any = {};
+
   if (subsetor) where.subsetoresAlvo = { has: subsetor };
   if (ativa !== 'false') where.ativa = true;
 
@@ -21,7 +23,10 @@ export async function GET(req: NextRequest) {
     take: 100,
   });
 
-  return NextResponse.json({ oportunidades, total: oportunidades.length });
+  return NextResponse.json({
+    oportunidades,
+    total: oportunidades.length,
+  });
 }
 
 const oportunidadeSchema = z.object({
@@ -37,14 +42,19 @@ const oportunidadeSchema = z.object({
   url: z.string().url().optional().or(z.literal('')),
 });
 
-// POST /api/oportunidades — cadastro de nova oportunidade (uso interno/curadoria)
-// Ao criar, recalcula automaticamente quais empresas são compatíveis (matching ativo).
+// POST /api/oportunidades — cadastro de nova oportunidade
 export async function POST(req: NextRequest) {
+  const { prisma } = await import('@/lib/prisma');
+  const { recalcularMatchesDaOportunidade } = await import('@/lib/matching');
+
   const body = await req.json();
   const parsed = oportunidadeSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ erro: 'Dados inválidos', detalhes: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { erro: 'Dados inválidos', detalhes: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
 
   const data = parsed.data;
@@ -53,10 +63,10 @@ export async function POST(req: NextRequest) {
     data: {
       titulo: data.titulo,
       descricao: data.descricao,
-      tipo: data.tipo,
+      tipo: data.tipo as any,
       fonte: data.fonte,
-      subsetoresAlvo: data.subsetoresAlvo as never,
-      estagiosAlvo: (data.estagiosAlvo ?? []) as never,
+      subsetoresAlvo: data.subsetoresAlvo as any,
+      estagiosAlvo: (data.estagiosAlvo ?? []) as any,
       valorMinimo: data.valorMinimo ?? null,
       valorMaximo: data.valorMaximo ?? null,
       prazoInscricao: data.prazoInscricao ? new Date(data.prazoInscricao) : null,
@@ -66,5 +76,11 @@ export async function POST(req: NextRequest) {
 
   const totalMatches = await recalcularMatchesDaOportunidade(oportunidade.id);
 
-  return NextResponse.json({ oportunidade, empresasNotificadas: totalMatches }, { status: 201 });
+  return NextResponse.json(
+    {
+      oportunidade,
+      empresasNotificadas: totalMatches,
+    },
+    { status: 201 }
+  );
 }
