@@ -1,0 +1,163 @@
+// Schema do banco de dados do HUB Azul
+// Rode `npx prisma db push` depois de configurar DATABASE_URL no .env
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Subsetor {
+  AQUICULTURA_PESCA
+  BIOTECNOLOGIA_MARINHA
+  ENERGIA_OCEANICA_OFFSHORE
+  OLEO_GAS_OFFSHORE
+  PORTOS_LOGISTICA_MARITIMA
+  TURISMO_COSTEIRO
+  MONITORAMENTO_CONSERVACAO
+}
+
+enum Estagio {
+  IDEACAO
+  PRE_OPERACIONAL
+  SEED
+  SERIES_A
+  SERIES_B
+  SERIES_C_MAIS
+  GROWTH
+  ESTABELECIDA
+}
+
+enum TipoStakeholder {
+  EMPRESA
+  INVESTIDOR
+  FORMULADOR_POLITICA
+  PESQUISADOR
+  ORGANISMO_INTERNACIONAL
+}
+
+enum OrigemDado {
+  RECEITA_FEDERAL_CNPJ
+  AUTO_CADASTRO
+  CURADORIA_MANUAL
+}
+
+enum TipoOportunidade {
+  EDITAL_PUBLICO
+  RODADA_INVESTIMENTO
+  PARCERIA
+  EVENTO
+}
+
+model Empresa {
+  id              String   @id @default(cuid())
+  cnpj            String?  @unique
+  razaoSocial     String
+  nomeFantasia    String?
+  descricao       String?  @db.Text
+  website         String?
+  email           String?
+  subsetor        Subsetor
+  estagio         Estagio?
+  uf              String
+  municipio       String
+  cnaePrincipal   String?
+  origemDado      OrigemDado @default(RECEITA_FEDERAL_CNPJ)
+  verificada      Boolean  @default(false)
+  buscaCapital    Boolean  @default(false)
+  ticketDesejado  Float?
+  perfilCompleto  Boolean  @default(false)
+  criadoEm        DateTime @default(now())
+  atualizadoEm    DateTime @updatedAt
+
+  matches         Match[]
+
+  @@index([subsetor])
+  @@index([uf])
+  @@index([uf, municipio])
+}
+
+model Investidor {
+  id                String   @id @default(cuid())
+  nome              String
+  tipo              String   // fundo VC, PE, fundo de impacto, banco de fomento, family office
+  pais              String   @default("Brasil")
+  estrangeiro       Boolean  @default(false)
+  descricao         String?  @db.Text
+  website           String?
+  email             String?
+  subsetoresInteresse Subsetor[]
+  estagiosInteresse Estagio[]
+  ticketMinimo      Float?
+  ticketMaximo      Float?
+  origemDado        OrigemDado @default(AUTO_CADASTRO)
+  verificado        Boolean  @default(false)
+  criadoEm          DateTime @default(now())
+  atualizadoEm      DateTime @updatedAt
+
+  matches           Match[]
+
+  @@index([estrangeiro])
+}
+
+model Oportunidade {
+  id              String   @id @default(cuid())
+  titulo          String
+  descricao       String   @db.Text
+  tipo            TipoOportunidade
+  fonte           String   // ex: FINEP, BNDES, CNPq, Investidor X
+  subsetoresAlvo  Subsetor[]
+  estagiosAlvo    Estagio[]
+  valorMinimo     Float?
+  valorMaximo     Float?
+  prazoInscricao  DateTime?
+  url             String?
+  ativa           Boolean  @default(true)
+  criadoEm        DateTime @default(now())
+  atualizadoEm    DateTime @updatedAt
+
+  matches         Match[]
+
+  @@index([ativa])
+  @@index([prazoInscricao])
+}
+
+// Tabela de matching: liga empresa <-> oportunidade ou empresa <-> investidor
+model Match {
+  id              String   @id @default(cuid())
+  empresaId       String
+  empresa         Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  investidorId    String?
+  investidor      Investidor? @relation(fields: [investidorId], references: [id], onDelete: Cascade)
+  oportunidadeId  String?
+  oportunidade    Oportunidade? @relation(fields: [oportunidadeId], references: [id], onDelete: Cascade)
+  score           Float    // 0 a 1, calculado pelo motor de matching
+  motivo          String?  @db.Text // explicação legível do porquê do match
+  notificado      Boolean  @default(false)
+  criadoEm        DateTime @default(now())
+
+  @@index([empresaId])
+  @@index([investidorId])
+  @@index([oportunidadeId])
+}
+
+// Município costeiro de referência (usado para refinar filtro geográfico além de UF)
+model MunicipioCosteiro {
+  id          String @id @default(cuid())
+  nome        String
+  uf          String
+  bacia       String? // ex: Bacia de Campos, Bacia de Santos
+
+  @@unique([nome, uf])
+}
+
+model ChatLog {
+  id          String   @id @default(cuid())
+  pergunta    String   @db.Text
+  resposta    String   @db.Text
+  empresaId   String?
+  criadoEm    DateTime @default(now())
+}
