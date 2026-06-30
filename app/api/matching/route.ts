@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { recalcularMatchesDaEmpresa } from '@/lib/matching';
 
+export const dynamic = "force-dynamic";
+
 // GET /api/matching?empresaId=xxx — retorna oportunidades e investidores compatíveis, ordenados por score
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

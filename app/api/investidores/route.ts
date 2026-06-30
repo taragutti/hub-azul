@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = "force-dynamic";
+
 // GET /api/investidores?subsetor=AQUICULTURA_PESCA&estrangeiro=true
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

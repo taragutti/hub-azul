@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { recalcularMatchesDaOportunidade } from '@/lib/matching';
 
+export const dynamic = "force-dynamic";
+
 // GET /api/oportunidades?subsetor=AQUICULTURA_PESCA&ativa=true
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
