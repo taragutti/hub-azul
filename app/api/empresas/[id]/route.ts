@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-// GET /api/empresas/[id] — perfil completo da empresa + matches associados
+// GET /api/empresas/[id]
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  const { prisma } = await import('@/lib/prisma');
+
   const empresa = await prisma.empresa.findUnique({
     where: { id: params.id },
     include: {
