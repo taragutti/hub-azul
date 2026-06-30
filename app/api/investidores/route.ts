@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 // GET /api/investidores?subsetor=AQUICULTURA_PESCA&estrangeiro=true
 export async function GET(req: NextRequest) {
+  const { prisma } = await import('@/lib/prisma');
+
   const { searchParams } = new URL(req.url);
   const subsetor = searchParams.get('subsetor');
   const estrangeiro = searchParams.get('estrangeiro');
 
-  const where: Record<string, unknown> = {};
+  const where: any = {};
+
   if (subsetor) where.subsetoresInteresse = { has: subsetor };
   if (estrangeiro === 'true') where.estrangeiro = true;
 
@@ -39,11 +42,16 @@ const investidorSchema = z.object({
 
 // POST /api/investidores — auto-cadastro de investidor
 export async function POST(req: NextRequest) {
+  const { prisma } = await import('@/lib/prisma');
+
   const body = await req.json();
   const parsed = investidorSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ erro: 'Dados inválidos', detalhes: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { erro: 'Dados inválidos', detalhes: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
 
   const data = parsed.data;
@@ -57,8 +65,8 @@ export async function POST(req: NextRequest) {
       descricao: data.descricao || null,
       website: data.website || null,
       email: data.email || null,
-      subsetoresInteresse: data.subsetoresInteresse as never,
-      estagiosInteresse: (data.estagiosInteresse ?? []) as never,
+      subsetoresInteresse: data.subsetoresInteresse as any,
+      estagiosInteresse: (data.estagiosInteresse ?? []) as any,
       ticketMinimo: data.ticketMinimo ?? null,
       ticketMaximo: data.ticketMaximo ?? null,
     },
