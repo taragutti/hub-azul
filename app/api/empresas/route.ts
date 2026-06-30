@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { recalcularMatchesDaEmpresa } from '@/lib/matching';
 
+export const dynamic = "force-dynamic";
+
 // GET /api/empresas?subsetor=AQUICULTURA_PESCA&uf=BA&municipio=Salvador&busca=texto
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
