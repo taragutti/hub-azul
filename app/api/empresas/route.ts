@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
-import { recalcularMatchesDaEmpresa } from '@/lib/matching';
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 // GET /api/empresas?subsetor=AQUICULTURA_PESCA&uf=BA&municipio=Salvador&busca=texto
 export async function GET(req: NextRequest) {
+  const { prisma } = await import('@/lib/prisma');
+
   const { searchParams } = new URL(req.url);
   const subsetor = searchParams.get('subsetor');
   const uf = searchParams.get('uf');
@@ -14,9 +15,11 @@ export async function GET(req: NextRequest) {
   const busca = searchParams.get('busca');
 
   const where: Record<string, unknown> = {};
+
   if (subsetor) where.subsetor = subsetor;
   if (uf) where.uf = uf;
   if (municipio) where.municipio = municipio;
+
   if (busca) {
     where.OR = [
       { razaoSocial: { contains: busca, mode: 'insensitive' } },
@@ -41,13 +44,23 @@ const empresaSchema = z.object({
   website: z.string().url().optional().or(z.literal('')),
   email: z.string().email().optional().or(z.literal('')),
   subsetor: z.enum([
-    'AQUICULTURA_PESCA', 'BIOTECNOLOGIA_MARINHA', 'ENERGIA_OCEANICA_OFFSHORE',
-    'OLEO_GAS_OFFSHORE', 'PORTOS_LOGISTICA_MARITIMA', 'TURISMO_COSTEIRO',
+    'AQUICULTURA_PESCA',
+    'BIOTECNOLOGIA_MARINHA',
+    'ENERGIA_OCEANICA_OFFSHORE',
+    'OLEO_GAS_OFFSHORE',
+    'PORTOS_LOGISTICA_MARITIMA',
+    'TURISMO_COSTEIRO',
     'MONITORAMENTO_CONSERVACAO',
   ]),
   estagio: z.enum([
-    'IDEACAO', 'PRE_OPERACIONAL', 'SEED', 'SERIES_A', 'SERIES_B',
-    'SERIES_C_MAIS', 'GROWTH', 'ESTABELECIDA',
+    'IDEACAO',
+    'PRE_OPERACIONAL',
+    'SEED',
+    'SERIES_A',
+    'SERIES_B',
+    'SERIES_C_MAIS',
+    'GROWTH',
+    'ESTABELECIDA',
   ]).optional(),
   uf: z.string().length(2),
   municipio: z.string().min(2),
@@ -57,11 +70,17 @@ const empresaSchema = z.object({
 
 // POST /api/empresas — auto-cadastro de empresa
 export async function POST(req: NextRequest) {
+  const { prisma } = await import('@/lib/prisma');
+  const { recalcularMatchesDaEmpresa } = await import('@/lib/matching');
+
   const body = await req.json();
   const parsed = empresaSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ erro: 'Dados inválidos', detalhes: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { erro: 'Dados inválidos', detalhes: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
 
   const data = parsed.data;
@@ -85,7 +104,6 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // Recalcula matches em segundo plano — não bloqueia a resposta ao usuário.
   recalcularMatchesDaEmpresa(empresa.id).catch((err) =>
     console.error('Falha ao calcular matches para nova empresa', empresa.id, err)
   );
