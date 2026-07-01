@@ -65,17 +65,20 @@ export default async function DashboardPage({
   const maxEmpresas = Math.max(1, ...dados.empresasPorSubsetor.map((s) => s._count));
 
   return (
-    <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-medium text-navy">
+    <div className="mx-auto w-full max-w-7xl overflow-x-hidden px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mb-6 flex w-full flex-col items-center justify-center gap-4 text-center md:flex-row md:justify-between md:text-left">
+        <h1 className="w-full max-w-xl text-center text-2xl font-medium leading-tight text-navy sm:text-3xl md:text-left">
           Ecossistema da economia azul no Brasil
         </h1>
 
-        <form className="flex gap-2" method="get">
+        <form
+          className="grid w-full grid-cols-1 gap-2 sm:max-w-md md:w-auto md:max-w-none md:grid-cols-3"
+          method="get"
+        >
           <select
             name="subsetor"
             defaultValue={searchParams.subsetor ?? ''}
-            className="rounded border border-gray-300 px-3 py-2 text-sm"
+            className="w-full min-w-0 rounded border border-gray-300 bg-white px-3 py-2 text-sm"
           >
             <option value="">Todos os subsetores</option>
             {SUBSETORES.map((s) => (
@@ -88,7 +91,7 @@ export default async function DashboardPage({
           <select
             name="uf"
             defaultValue={searchParams.uf ?? ''}
-            className="rounded border border-gray-300 px-3 py-2 text-sm"
+            className="w-full min-w-0 rounded border border-gray-300 bg-white px-3 py-2 text-sm"
           >
             <option value="">Todos os estados</option>
             {ESTADOS_COSTEIROS.map((uf) => (
@@ -100,14 +103,14 @@ export default async function DashboardPage({
 
           <button
             type="submit"
-            className="rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
+            className="w-full rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
           >
             Filtrar
           </button>
         </form>
       </div>
 
-      <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="mb-8 grid w-full grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
         <MetricCard label="Empresas cadastradas" valor={dados.totalEmpresas} />
         <MetricCard
           label="Investidores ativos"
@@ -118,13 +121,13 @@ export default async function DashboardPage({
         <MetricCard label="Subsetores mapeados" valor={SUBSETORES.length} />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="min-w-0 lg:col-span-2">
           <h2 className="mb-3 text-lg font-medium text-navy">
             Ecossistema por subsetor
           </h2>
 
-          <div className="space-y-2 rounded-xl border border-gray-200 bg-white p-4">
+          <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
             {dados.empresasPorSubsetor.length === 0 && (
               <p className="text-sm text-gray-500">
                 Nenhuma empresa cadastrada ainda para este filtro.
@@ -132,12 +135,19 @@ export default async function DashboardPage({
             )}
 
             {dados.empresasPorSubsetor.map((item) => (
-              <div key={item.subsetor} className="flex items-center gap-3">
-                <span className="w-52 truncate text-sm text-gray-700">
+              <div
+                key={item.subsetor}
+                className="grid grid-cols-[1fr_auto] items-center gap-2 sm:flex sm:gap-3"
+              >
+                <span className="min-w-0 truncate text-sm text-gray-700 sm:w-52">
                   {labelSubsetor(item.subsetor)}
                 </span>
 
-                <div className="h-2 flex-1 rounded-full bg-gray-100">
+                <span className="text-right text-sm text-gray-600 sm:w-8">
+                  {item._count}
+                </span>
+
+                <div className="col-span-2 h-2 w-full rounded-full bg-gray-100 sm:col-span-1 sm:flex-1">
                   <div
                     className="h-2 rounded-full bg-teal"
                     style={{
@@ -145,10 +155,6 @@ export default async function DashboardPage({
                     }}
                   />
                 </div>
-
-                <span className="w-8 text-right text-sm text-gray-600">
-                  {item._count}
-                </span>
               </div>
             ))}
           </div>
@@ -157,27 +163,27 @@ export default async function DashboardPage({
             Empresas em destaque
           </h2>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
             {dados.empresasDestaque.map((empresa) => (
               <Link
                 key={empresa.id}
                 href={`/empresas/${empresa.id}`}
-                className="rounded-xl border border-gray-200 bg-white p-4 hover:border-teal"
+                className="min-w-0 rounded-xl border border-gray-200 bg-white p-4 hover:border-teal"
               >
-                <p className="font-medium text-gray-900">
+                <p className="truncate font-medium text-gray-900">
                   {empresa.nomeFantasia || empresa.razaoSocial}
                 </p>
 
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 truncate text-sm text-gray-500">
                   {labelSubsetor(empresa.subsetor)}
                 </p>
 
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="text-xs text-gray-400">
+                <div className="mt-2 flex min-w-0 items-center justify-between gap-2">
+                  <span className="min-w-0 truncate text-xs text-gray-400">
                     {empresa.municipio}/{empresa.uf}
                   </span>
 
-                  <span className="rounded bg-lightblue px-2 py-0.5 text-xs text-teal">
+                  <span className="shrink-0 rounded bg-lightblue px-2 py-0.5 text-xs text-teal">
                     {labelEstagio(empresa.estagio)}
                   </span>
                 </div>
@@ -196,15 +202,15 @@ export default async function DashboardPage({
           </div>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <h2 className="mb-3 text-lg font-medium text-navy">
             Oportunidades recentes
           </h2>
 
           <div className="space-y-3">
             {dados.oportunidadesProximas.map((op) => (
-              <div key={op.id} className="rounded-xl border border-gray-200 bg-white p-3">
-                <p className="text-xs font-medium text-teal">
+              <div key={op.id} className="min-w-0 rounded-xl border border-gray-200 bg-white p-3">
+                <p className="truncate text-xs font-medium text-teal">
                   {op.tipo.replace('_', ' ')}
                 </p>
 
@@ -240,7 +246,7 @@ function MetricCard({
   nota?: string;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
+    <div className="min-w-0 rounded-xl border border-gray-200 bg-white p-4">
       <p className="text-sm text-gray-500">{label}</p>
       <p className="mt-1 text-2xl font-medium text-navy">{valor}</p>
       {nota && <p className="mt-1 text-xs text-gray-400">{nota}</p>}
