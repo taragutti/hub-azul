@@ -21,6 +21,7 @@ async function buscarDadosDashboard(subsetorFiltro?: string, ufFiltro?: string) 
     empresasPorSubsetor,
     empresasDestaque,
     oportunidadesProximas,
+    oportunidadesPNCP,
   ] = await Promise.all([
     prisma.empresa.count({ where: whereEmpresas }),
     prisma.investidor.count(),
@@ -33,6 +34,7 @@ async function buscarDadosDashboard(subsetorFiltro?: string, ufFiltro?: string) 
       orderBy: { prazoInscricao: 'asc' },
       take: 5,
     }),
+    buscarOportunidadesPNCP(5),
   ]);
 
   return {
@@ -43,6 +45,7 @@ async function buscarDadosDashboard(subsetorFiltro?: string, ufFiltro?: string) 
     empresasPorSubsetor,
     empresasDestaque,
     oportunidadesProximas,
+    oportunidadesPNCP,
   };
 }
 
@@ -113,12 +116,15 @@ export default async function DashboardPage({
 
       <div className="mb-8 grid w-full grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
         <MetricCard label="Empresas cadastradas" valor={dados.totalEmpresas} />
+
         <MetricCard
           label="Investidores ativos"
           valor={dados.totalInvestidores}
           nota={`${dados.totalInvestidoresEstrangeiros} estrangeiros`}
         />
+
         <MetricCard label="Oportunidades abertas" valor={dados.oportunidadesAtivas} />
+
         <MetricCard label="Subsetores mapeados" valor={SUBSETORES.length} />
       </div>
 
@@ -209,25 +215,50 @@ export default async function DashboardPage({
           </h2>
 
           <div className="space-y-3">
-            {dados.oportunidadesProximas.map((op) => (
-              <div key={op.id} className="min-w-0 rounded-xl border border-gray-200 bg-white p-3">
-                <p className="truncate text-xs font-medium text-teal">
-                  {op.tipo.replace('_', ' ')}
-                </p>
+            {dados.oportunidadesPNCP.length > 0 ? (
+              dados.oportunidadesPNCP.map((op) => (
+                <a
+                  key={op.id}
+                  href={op.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block min-w-0 rounded-xl border border-gray-200 bg-white p-3 hover:border-teal"
+                >
+                  <p className="truncate text-xs font-medium text-teal">
+                    {op.tipo}
+                  </p>
 
-                <p className="mt-1 text-sm text-gray-900">
-                  {op.titulo}
-                </p>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {op.titulo}
+                  </p>
 
-                <p className="mt-1 text-xs text-amber-600">
-                  {diasRestantes(op.prazoInscricao)}
-                </p>
-              </div>
-            ))}
+                  <p className="mt-1 text-xs text-amber-600">
+                    Fonte: PNCP
+                  </p>
+                </a>
+              ))
+            ) : dados.oportunidadesProximas.length > 0 ? (
+              dados.oportunidadesProximas.map((op) => (
+                <div
+                  key={op.id}
+                  className="min-w-0 rounded-xl border border-gray-200 bg-white p-3"
+                >
+                  <p className="truncate text-xs font-medium text-teal">
+                    {op.tipo.replace('_', ' ')}
+                  </p>
 
-            {dados.oportunidadesProximas.length === 0 && (
+                  <p className="mt-1 text-sm text-gray-900">
+                    {op.titulo}
+                  </p>
+
+                  <p className="mt-1 text-xs text-amber-600">
+                    {diasRestantes(op.prazoInscricao)}
+                  </p>
+                </div>
+              ))
+            ) : (
               <p className="text-sm text-gray-500">
-                Nenhuma oportunidade cadastrada ainda.
+                Nenhuma oportunidade encontrada no momento.
               </p>
             )}
           </div>
