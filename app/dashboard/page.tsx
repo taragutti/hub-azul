@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { SUBSETORES, ESTADOS_COSTEIROS, labelSubsetor, labelEstagio } from '@/lib/referencias';
+import { buscarOportunidadesPNCP } from '@/lib/oportunidades-pncp';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
